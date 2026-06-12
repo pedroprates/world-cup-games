@@ -26,7 +26,7 @@ The app currently renders hardcoded, incomplete schedule data entirely on the cl
 1. **Canonical broadcaster names**: Globo, SporTV, Cazé TV, Globoplay, GE TV. Drop "CazeTV" (no accent/space) and "ge.globo" variants.
 2. **Broadcaster logos**: self-hosted in `/public/broadcasters/` as SVG (PNG fallback). Do not hotlink from broadcaster CDNs — URLs change and may block external refs.
 3. **Backend architecture**: Next.js 16 Route Handlers in `app/api/` — no separate service. Data is read-only and low-traffic; a separate service adds operational overhead with no benefit.
-4. **Game data**: curated static TypeScript (no scraping, no external API). FIFA has no public API; scraping is brittle. Group stage schedule is publicly known from the draw; knockout fixtures get added as results are known (follow-up ticket).
+4. **Game data**: group stage fixtures are curated static TypeScript (publicly known from the draw). Knockout fixtures are fetched daily by a sync script from a public sports API and written to a JSON file on disk — broadcaster assignments still require manual curation after each sync (no public API carries Brazilian broadcast rights).
 5. **Missing 24 teams**: all 48 qualified nations are known from the 2026 draw. Add all at once. `flagcdn.com` supports ISO 3166-1 alpha-2 codes for all nations; England (`gb-eng`) pattern is already handled.
 
 ## Technical Decisions
@@ -83,13 +83,36 @@ export interface ApiBroadcastersResponse { broadcasters: Broadcaster[] }
 - Invalid params → `400` with `{ error: string }`; unknown id → `404` with `{ error: "Game not found" }`.
 
 ### Code layout
-- `lib/fixtures.ts` — raw 104 fixtures (data only, no logic)
+- `lib/fixtures.ts` — raw group-stage fixtures (data only, no logic; seed for `data/fixtures.json`)
+- `data/fixtures.json` — **new**: runtime source of truth for all fixtures; populated from `lib/fixtures.ts` at first run, then updated by the sync script
 - `lib/teams.ts` — raw 48 teams + `flagUrl()` (add missing 24 entries)
 - `lib/broadcasters.ts` — **new**: 5 broadcasters with id, name, logo path
 - `lib/api-types.ts` — **new**: API response shapes
-- `lib/api/enrich.ts` — **new**: pure server-only helpers `enrichGame(fixture)` and `filterGames({group, date, team})`
+- `lib/api/enrich.ts` — **new**: pure server-only helpers `enrichGame(fixture)` and `filterGames({group, date, team})`; reads from `data/fixtures.json` at request time
 - `lib/client/api.ts` — **new**: typed client wrappers (`fetchGames()`, `fetchGame(id)`, `fetchTeams()`, `fetchBroadcasters()`)
 - `lib/schedule.ts` — **new**: refactored `buildSchedule` accepting `games: ApiGame[]` instead of importing FIXTURES directly
+- `scripts/sync-fixtures.ts` — **new**: daily sync script (see below)
+
+### Fixture sync architecture
+
+The group stage schedule is static and fully known. Once the group stage ends, knockout bracket fixtures (R32 → R16 → QF → SF → Final) become known progressively. The sync script handles this.
+
+**Data store**: move the authoritative fixture list from the static `lib/fixtures.ts` TypeScript import to `data/fixtures.json` on disk. The API layer reads this file at request time with `fs.readFile`. This means:
+- `app/api/games/route.ts` and `app/api/games/[id]/route.ts` drop `dynamic='force-static'` and instead use `export const revalidate = 3600` (ISR, 1-hour stale window) — changes to the JSON file are reflected within an hour without a full rebuild.
+- `app/api/teams/route.ts` and `app/api/broadcasters/route.ts` remain `force-static` (team and broadcaster data never changes at runtime).
+
+**⚠ Deployment assumption**: the sync script writes to `data/fixtures.json` on the local filesystem. This only works on a persistent server (VPS/container). If the app is deployed to Vercel or another serverless platform, runtime filesystem writes are not persisted — in that case, the sync script must instead open a PR / commit to the repo and trigger a redeploy. Flag this before deployment.
+
+**Sync script** (`scripts/sync-fixtures.ts`):
+1. Reads `data/fixtures.json` (existing fixtures) and builds an index by fixture id.
+2. Fetches upcoming fixtures for the current WC 2026 tournament from `football-data.org` (free tier; needs `FOOTBALL_DATA_API_KEY` env var) or equivalent public sports API.
+3. For each incoming fixture not already in the index, constructs a `Fixture` object with `broadcasterIds: []` (empty — requires manual assignment).
+4. Merges: existing fixtures are preserved as-is; only new fixtures are appended.
+5. Writes the merged array back to `data/fixtures.json`.
+6. Runs the same validation assertions as `scripts/validate-fixtures.ts` (unique ids, team codes resolve, valid ISO dates). Exits with code 1 on failure — the cronjob can alert on non-zero exit.
+7. Logs a summary: `X fixtures already present, Y new fixtures added, Z fixtures with empty broadcasterIds (need manual broadcast assignment)`.
+
+**Broadcaster assignment gap**: no public API carries Brazilian broadcast rights. After each sync run, an engineer must manually edit `data/fixtures.json` to assign `broadcasterIds` for the newly added fixtures before they go live in the UI. The empty-array fallback ("Sem transmissão confirmada") ensures the UI degrades gracefully in the interim.
 
 ### Server vs Client
 Keep `app/page.tsx` as `"use client"` (Pattern A — minimal churn). Replace direct `buildSchedule` import with a `useEffect` that calls `fetchGames()`, stores `ApiGame[]` in state, then passes games to the refactored `buildSchedule`. Countdown/live state stays client-side (needs `now` ticking every second).
@@ -125,8 +148,8 @@ _(none — all decisions made from public sources and codebase investigation)_
 *Implement all four Route Handlers and shared enrichment helper.*
 
 - [ ] C1: Create `lib/api/enrich.ts` with `enrichGame(fixture): ApiGame` and `filterGames(fixtures, {group, date, team})`. Pure functions, server-only. — `backend-engineer`
-- [ ] C2: Create `app/api/games/route.ts` (GET, `dynamic='force-static'`); accepts `?group`, `?date`, `?team`; returns `ApiGamesResponse`; validates params, 400 on bad input. — `backend-engineer`
-- [ ] C3: Create `app/api/games/[id]/route.ts` (GET); uses `await ctx.params`; returns `ApiGameResponse` or `{ error: "Game not found" }` 404. — `backend-engineer`
+- [ ] C2: Create `app/api/games/route.ts` (GET, `revalidate=3600`); reads from `data/fixtures.json` via `fs.readFile`; accepts `?group`, `?date`, `?team`; returns `ApiGamesResponse`; validates params, 400 on bad input. — `backend-engineer`
+- [ ] C3: Create `app/api/games/[id]/route.ts` (GET, `revalidate=3600`); reads from `data/fixtures.json`; uses `await ctx.params`; returns `ApiGameResponse` or `{ error: "Game not found" }` 404. — `backend-engineer`
 - [ ] C4: Create `app/api/teams/route.ts` (GET, `dynamic='force-static'`); returns `ApiTeamsResponse` sorted by name. — `backend-engineer`
 - [ ] C5: Create `app/api/broadcasters/route.ts` (GET, `dynamic='force-static'`); returns `ApiBroadcastersResponse`. — `backend-engineer`
 
@@ -139,8 +162,17 @@ _(none — all decisions made from public sources and codebase investigation)_
 - [ ] D4: Update `HeroClassic`, `HeroEditorial`, `HeroTicket`, `TodaySection`, `UpcomingSection` to render broadcaster logos (`<img src={broadcaster.logo}>`) alongside channel names; keep first 2 in short variant. — `frontend-engineer`
 - [ ] D5: Add "Sem transmissão confirmada" fallback pill in card components when `broadcasters` is empty. — `frontend-engineer`
 
-### Group E — Validation (parallel, after Group D)
+### Group E — Fixture Sync Infrastructure (parallel, after Group B)
+*Enables daily sync of knockout stage fixtures; runs in parallel with Groups C–D.*
+
+- [ ] E1: Create `scripts/seed-fixtures.ts` — one-time script that reads `lib/fixtures.ts` and writes `data/fixtures.json`. Run this once before deploying; output file is committed to the repo as the initial state. — `backend-engineer`
+- [ ] E2: Create `scripts/sync-fixtures.ts` — daily sync script (see architecture above). Reads existing `data/fixtures.json`, fetches upcoming fixtures from `football-data.org` API (`FOOTBALL_DATA_API_KEY` required), merges new fixtures with `broadcasterIds: []`, writes back, runs validation, exits 1 on failure. Logs count of new fixtures and any with empty broadcaster ids. — `backend-engineer`
+- [ ] E3: Add `FOOTBALL_DATA_API_KEY` to `.env.local.example` with a placeholder and a comment pointing to the registration URL. — `backend-engineer`
+- [ ] E4: Add `npm run sync` script to `package.json` pointing to `scripts/sync-fixtures.ts` (via `tsx` or `ts-node`). — `backend-engineer`
+
+### Group F — Validation (parallel, after Groups D and E)
 *Integration checks before merge.*
 
-- [ ] E1: Add data-integrity script (`scripts/validate-fixtures.ts`) asserting 104 unique ids, all team/broadcaster ids resolve, all kickoffs are valid ISO dates. — `backend-engineer`
-- [ ] E2: Smoke-test all four endpoints including query-param filters; confirm `next build` prerenders the static handlers successfully. — `frontend-engineer`
+- [ ] F1: Add data-integrity script (`scripts/validate-fixtures.ts`) asserting unique ids, all team/broadcaster ids resolve, all kickoffs are valid ISO dates. Reused internally by `sync-fixtures.ts`. — `backend-engineer`
+- [ ] F2: Smoke-test all four endpoints including query-param filters; confirm games endpoint reflects `data/fixtures.json` content and not a stale build cache. — `frontend-engineer`
+- [ ] F3: Do a manual dry-run of `npm run sync` to confirm it merges without overwriting existing fixtures and logs the broadcaster-assignment warning correctly. — `backend-engineer`
