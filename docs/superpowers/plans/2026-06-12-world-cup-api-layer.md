@@ -362,6 +362,12 @@ The sync script fetches upcoming fixtures from `football-data.org` and merges on
 ```bash
 # Get a free API key at https://www.football-data.org/client/register
 FOOTBALL_DATA_API_KEY=your_api_key_here
+
+# GitHub API token for Lambda deployment (repo:write scope)
+# Only needed for the Lambda — not required for local dev
+GITHUB_TOKEN=your_github_token_here
+GITHUB_REPO=your-username/world-cup-games
+GITHUB_BRANCH=feat/world-cup-backend
 ```
 
 - [ ] **Step 2: Write `scripts/sync-fixtures.ts`**
@@ -496,6 +502,6 @@ Before moving to Plan 3, verify:
 - [ ] `data/fixtures.json` committed to repo
 - [ ] `scripts/sync-fixtures.ts` and `.env.local.example` committed
 
-**Deployment note:** `scripts/sync-fixtures.ts` writes to `data/fixtures.json` on the local filesystem. This works on a persistent server (VPS/container) but NOT on serverless platforms (Vercel, Netlify). On serverless, the sync script must instead commit to the repo and trigger a redeploy. Decide and document this before production deployment.
+**Deployment note (decided):** The app runs on AWS Amplify. `scripts/sync-fixtures.ts` is for **local dev only** — it writes to disk for dry-run testing. In production, a daily Lambda commits the updated `data/fixtures.json` to GitHub via the GitHub Contents API, triggering an Amplify rebuild. See Plan 4 for the full Lambda + Amplify + EventBridge setup.
 
 **Next:** Plan 3 — Client Integration + Validation

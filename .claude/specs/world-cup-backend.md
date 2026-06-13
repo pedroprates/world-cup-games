@@ -101,7 +101,7 @@ The group stage schedule is static and fully known. Once the group stage ends, k
 - `app/api/games/route.ts` and `app/api/games/[id]/route.ts` drop `dynamic='force-static'` and instead use `export const revalidate = 3600` (ISR, 1-hour stale window) — changes to the JSON file are reflected within an hour without a full rebuild.
 - `app/api/teams/route.ts` and `app/api/broadcasters/route.ts` remain `force-static` (team and broadcaster data never changes at runtime).
 
-**⚠ Deployment assumption**: the sync script writes to `data/fixtures.json` on the local filesystem. This only works on a persistent server (VPS/container). If the app is deployed to Vercel or another serverless platform, runtime filesystem writes are not persisted — in that case, the sync script must instead open a PR / commit to the repo and trigger a redeploy. Flag this before deployment.
+**Deployment architecture (decided)**: the app runs on AWS Amplify (`copa.prates.fyi`). Filesystem writes are not persisted across Amplify builds, so the sync script does **not** write to disk at runtime. Instead, a daily Lambda (triggered by EventBridge) fetches from `football-data.org`, reads the current `data/fixtures.json` via GitHub API, merges new fixtures, and commits the updated file back to the branch via GitHub API. Amplify detects the push and triggers a rebuild — the new fixture data is live within ~3 minutes. The local `scripts/sync-fixtures.ts` (which writes to disk) is kept for local dev and dry-run testing only. The Lambda has its own self-contained sync logic using the GitHub Contents API (no git CLI, no tsx).
 
 **Sync script** (`scripts/sync-fixtures.ts`):
 1. Reads `data/fixtures.json` (existing fixtures) and builds an index by fixture id.
