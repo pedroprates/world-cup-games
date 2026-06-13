@@ -71,3 +71,9 @@ Whenever shipping a new feature, ask the user to review the change before commit
 - **NEVER** do a `git add -a`, only add to staging environment files that you actively worked on.
 
 Human-in-the-loop is important before commits, just avoid it when explicitly asked to do so.
+
+## 6. Specs as Source of Truth
+
+Always update the source of truth on @.claude/specs/ as any change on the implementation drifts from the spec file. We'll keep them, because it's a simpler way to understand the technical decisions.
+
+The same way, if you have any doubts, reference @.claude/specs/.
