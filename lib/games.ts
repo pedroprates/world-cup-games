@@ -1,5 +1,6 @@
 import { FIXTURES } from "./fixtures";
 import { TEAMS } from "./teams";
+import { BROADCASTERS_MAP } from "./broadcasters";
 import {
   dayKey,
   formatFullDayLabel,
@@ -29,6 +30,7 @@ export const buildSchedule = ({ now, preferred, filter }: BuildArgs): BuildResul
     const away = TEAMS[f.away];
     const isPreferred = f.home === preferred || f.away === preferred;
     const isLive = isLiveNow(kickoff, now);
+    const channels = f.broadcasterIds.map(id => BROADCASTERS_MAP[id]?.name ?? id);
     return {
       id: f.id,
       home,
@@ -37,8 +39,8 @@ export const buildSchedule = ({ now, preferred, filter }: BuildArgs): BuildResul
       city: f.city,
       venue: f.venue,
       group: f.group,
-      channels: f.channels,
-      channelsShort: f.channels.slice(0, 2),
+      channels,
+      channelsShort: channels.slice(0, 2),
       timeLabel: formatTime(kickoff),
       dayLabel: formatFullDayLabel(kickoff, now),
       isLive,
@@ -65,12 +67,12 @@ export const buildSchedule = ({ now, preferred, filter }: BuildArgs): BuildResul
   const groupsMap = new Map<string, DayGroup>();
   for (const g of laterFlat) {
     const k = dayKey(g.kickoff);
-    let group = groupsMap.get(k);
-    if (!group) {
-      group = { key: k, label: g.dayLabel, games: [] };
-      groupsMap.set(k, group);
+    let grp = groupsMap.get(k);
+    if (!grp) {
+      grp = { key: k, label: g.dayLabel, games: [] };
+      groupsMap.set(k, grp);
     }
-    group.games.push(g);
+    grp.games.push(g);
   }
 
   return { next, today, upcoming: Array.from(groupsMap.values()) };

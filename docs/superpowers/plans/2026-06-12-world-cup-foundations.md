@@ -17,7 +17,7 @@
 **Files:**
 - Create: `lib/broadcasters.ts`
 
-- [ ] **Step 1: Write `lib/broadcasters.ts`**
+- [x] **Step 1: Write `lib/broadcasters.ts`**
 
 ```ts
 import type { Broadcaster } from "./types";
@@ -46,7 +46,7 @@ export const BROADCASTERS_MAP: Record<string, Broadcaster> = Object.fromEntries(
 - Modify: `lib/types.ts`
 - Modify: `lib/games.ts`
 
-- [ ] **Step 1: Create `lib/api-types.ts`**
+- [x] **Step 1: Create `lib/api-types.ts`**
 
 ```ts
 import type { Broadcaster, Team } from "./types";
@@ -68,7 +68,7 @@ export interface ApiTeamsResponse       { teams: Team[] }
 export interface ApiBroadcastersResponse { broadcasters: Broadcaster[] }
 ```
 
-- [ ] **Step 2: Add `Broadcaster` interface and update `Fixture` in `lib/types.ts`**
+- [x] **Step 2: Add `Broadcaster` interface and update `Fixture` in `lib/types.ts`**
 
 Add `Broadcaster` before `Fixture`, and replace `channels: string[]` with `broadcasterIds: string[]`:
 
@@ -152,7 +152,7 @@ export type HeroStyle = "classic" | "editorial" | "ticket";
 
 > `EnrichedGame` keeps `channels: string[]` for now so existing components don't break. Plan 3 replaces them with `broadcasters: Broadcaster[]` when it updates all components.
 
-- [ ] **Step 3: Update `lib/games.ts` to use `broadcasterIds`**
+- [x] **Step 3: Update `lib/games.ts` to use `broadcasterIds`**
 
 `Fixture.channels` is gone. Import `BROADCASTERS_MAP` and resolve names from `broadcasterIds`. Replace the full file:
 
@@ -238,7 +238,7 @@ export const buildSchedule = ({ now, preferred, filter }: BuildArgs): BuildResul
 };
 ```
 
-- [ ] **Step 4: Run TypeScript check**
+- [x] **Step 4: Run TypeScript check**
 
 ```bash
 npx tsc --noEmit
@@ -255,7 +255,7 @@ Expected: No errors. If you see `Property 'channels' does not exist on type 'Fix
 
 The `TeamCode` union was already updated in Task 2. Now add the team data to `TEAMS`.
 
-- [ ] **Step 1: Append 24 team entries to the `TEAMS` record in `lib/teams.ts`**
+- [x] **Step 1: Append 24 team entries to the `TEAMS` record in `lib/teams.ts`**
 
 Add inside the `TEAMS` object after the `ITA:` entry:
 
@@ -294,7 +294,7 @@ Add inside the `TEAMS` object after the `ITA:` entry:
 
 > **Verify team codes:** Cross-check against the official FIFA 2026 qualified teams list. Some codes above are educated guesses — any team that didn't qualify must be removed from `TeamCode` in `lib/types.ts` and from `lib/teams.ts`. Any team that qualified with a different FIFA code must be corrected.
 
-- [ ] **Step 2: Run TypeScript check**
+- [x] **Step 2: Run TypeScript check**
 
 ```bash
 npx tsc --noEmit
@@ -315,13 +315,13 @@ Expected: No errors. Common failure: a `TeamCode` in `lib/fixtures.ts` that isn'
 
 > These are minimal placeholder SVGs for development. Replace with real brand assets before production. The spec prohibits hotlinking from broadcaster CDNs.
 
-- [ ] **Step 1: Create the directory**
+- [x] **Step 1: Create the directory**
 
 ```bash
 mkdir -p public/broadcasters
 ```
 
-- [ ] **Step 2: Create `public/broadcasters/globo.svg`**
+- [x] **Step 2: Create `public/broadcasters/globo.svg`**
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
@@ -331,7 +331,7 @@ mkdir -p public/broadcasters
 </svg>
 ```
 
-- [ ] **Step 3: Create `public/broadcasters/sportv.svg`**
+- [x] **Step 3: Create `public/broadcasters/sportv.svg`**
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
@@ -341,7 +341,7 @@ mkdir -p public/broadcasters
 </svg>
 ```
 
-- [ ] **Step 4: Create `public/broadcasters/caze-tv.svg`**
+- [x] **Step 4: Create `public/broadcasters/caze-tv.svg`**
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
@@ -351,7 +351,7 @@ mkdir -p public/broadcasters
 </svg>
 ```
 
-- [ ] **Step 5: Create `public/broadcasters/globoplay.svg`**
+- [x] **Step 5: Create `public/broadcasters/globoplay.svg`**
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
@@ -361,7 +361,7 @@ mkdir -p public/broadcasters
 </svg>
 ```
 
-- [ ] **Step 6: Create `public/broadcasters/ge-tv.svg`**
+- [x] **Step 6: Create `public/broadcasters/ge-tv.svg`**
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
@@ -371,7 +371,7 @@ mkdir -p public/broadcasters
 </svg>
 ```
 
-- [ ] **Step 7: Verify files**
+- [x] **Step 7: Verify files**
 
 ```bash
 ls public/broadcasters/
@@ -400,7 +400,7 @@ The WC 2026 group stage started 2026-06-11 so the full schedule is public.
 **Fixture id format:** `"{HOME}-{AWAY}-YYYY-MM-DD"` using FIFA three-letter codes, date in Brasília timezone.  
 **Kickoff format:** `"YYYY-MM-DDTHH:MM:SS-03:00"` (all times in BRT, UTC−3).
 
-- [ ] **Step 1: Replace `lib/fixtures.ts`**
+- [x] **Step 1: Replace `lib/fixtures.ts`**
 
 Start with the 14 existing games converted to the new format, then fill in the remaining 58 from the official FIFA schedule:
 
@@ -514,7 +514,7 @@ export const FIXTURES: Fixture[] = [
 
 > The 12 existing group names in the data above (Grupo A through Grupo L) must be verified against the actual draw. Any group with fewer than 6 entries is incomplete.
 
-- [ ] **Step 2: Verify fixture count (must be 72)**
+- [x] **Step 2: Verify fixture count (must be 72)**
 
 ```bash
 node -e "const f = require('./lib/fixtures'); console.log('Count:', f.FIXTURES.length)"
@@ -522,7 +522,7 @@ node -e "const f = require('./lib/fixtures'); console.log('Count:', f.FIXTURES.l
 
 Expected: `Count: 72`
 
-- [ ] **Step 3: Verify no duplicate ids**
+- [x] **Step 3: Verify no duplicate ids**
 
 ```bash
 node -e "
@@ -535,7 +535,7 @@ console.log(dupes.length ? 'DUPLICATES: ' + dupes.join(', ') : 'No duplicates');
 
 Expected: `No duplicates`
 
-- [ ] **Step 4: Verify each group has exactly 6 games**
+- [x] **Step 4: Verify each group has exactly 6 games**
 
 ```bash
 node -e "
@@ -549,7 +549,7 @@ console.log('Total groups:', Object.keys(groups).length, '(expected 12)');
 
 Expected: Each grupo shows `6`, total groups is `12`.
 
-- [ ] **Step 5: Run TypeScript check**
+- [x] **Step 5: Run TypeScript check**
 
 ```bash
 npx tsc --noEmit
@@ -561,7 +561,7 @@ Expected: No errors. If a `TeamCode` in a new fixture isn't in the union, add it
 
 ### Task 6: Verify all 48 flag URLs (spec B2)
 
-- [ ] **Step 1: Check all flag CDN URLs return 200**
+- [x] **Step 1: Check all flag CDN URLs return 200**
 
 ```bash
 node -e "
