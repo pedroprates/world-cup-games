@@ -24,7 +24,7 @@ The app currently renders hardcoded, incomplete schedule data entirely on the cl
 ## UX Decisions
 
 1. **Canonical broadcaster names**: Globo, SporTV, Cazé TV, Globoplay, GE TV. Drop "CazeTV" (no accent/space) and "ge.globo" variants.
-2. **Broadcaster logos**: self-hosted in `/public/broadcasters/` as SVG (PNG fallback). Do not hotlink from broadcaster CDNs — URLs change and may block external refs.
+2. **Broadcaster logos**: use public URLs from each broadcaster's official web presence (e.g. their CDN or press assets). No local SVG files needed.
 3. **Backend architecture**: Next.js 16 Route Handlers in `app/api/` — no separate service. Data is read-only and low-traffic; a separate service adds operational overhead with no benefit.
 4. **Game data**: group stage fixtures are curated static TypeScript (publicly known from the draw). Knockout fixtures are fetched daily by a sync script from a public sports API and written to a JSON file on disk — broadcaster assignments still require manual curation after each sync (no public API carries Brazilian broadcast rights).
 5. **Missing 24 teams**: all 48 qualified nations are known from the 2026 draw. Add all at once. `flagcdn.com` supports ISO 3166-1 alpha-2 codes for all nations; England (`gb-eng`) pattern is already handled.
@@ -45,7 +45,7 @@ Add to `lib/types.ts`:
 export interface Broadcaster {
   id: string;        // slug: "globo" | "sportv" | "caze-tv" | "globoplay" | "ge-tv"
   name: string;      // display: "Cazé TV"
-  logo: string;      // path: "/broadcasters/caze-tv.svg"
+  logo: string;      // absolute URL to the broadcaster's logo on the web
 }
 ```
 
@@ -136,7 +136,7 @@ _(none — all decisions made from public sources and codebase investigation)_
 - [ ] A2: Create `lib/api-types.ts` with `ApiGame`, `ApiGamesResponse`, `ApiGameResponse`, `ApiTeamsResponse`, `ApiBroadcastersResponse`. — `backend-engineer`
 - [ ] A3: Create `lib/broadcasters.ts` with the 5 canonical broadcasters (id, name, logo path). — `backend-engineer`
 - [ ] A4: Extend `TeamCode` union in `lib/types.ts` with the missing 24 codes; add their `Team` entries to `lib/teams.ts` with correct flagcdn ISO codes. — `backend-engineer`
-- [ ] A5: Source/create 5 SVG broadcaster logos and place under `/public/broadcasters/` (`globo.svg`, `sportv.svg`, `caze-tv.svg`, `globoplay.svg`, `ge-tv.svg`). — `frontend-engineer`
+- [x] A5: ~~Source/create 5 SVG broadcaster logos~~ — removed. Broadcaster logos use public web URLs set directly in `lib/broadcasters.ts`; no local asset files needed.
 
 ### Group B — Data Population (parallel, after Group A)
 *Fill all fixtures using the new schema; verify external flag assets.*
