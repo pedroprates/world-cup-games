@@ -10,13 +10,15 @@ import { HeroTicket } from "@/components/HeroTicket";
 import { TodaySection } from "@/components/TodaySection";
 import { UpcomingSection } from "@/components/UpcomingSection";
 import { TEAMS } from "@/lib/teams";
+import { fetchGames } from "@/lib/client/api";
+import { buildSchedule } from "@/lib/schedule";
 import {
   computeCountdown,
   dayKey,
   formatDayMonth,
   formatTime,
 } from "@/lib/format";
-import { buildSchedule } from "@/lib/games";
+import type { ApiGame } from "@/lib/api-types";
 import type { HeroStyle, TeamCode } from "@/lib/types";
 
 const FALLBACK_NOW = new Date("2026-06-12T12:00:00-03:00");
@@ -27,17 +29,22 @@ export default function Home() {
   const [preferred, setPreferred] = useState<TeamCode>("BRA");
   const [filter, setFilter] = useState<TeamCode | "">("");
   const [heroStyle, setHeroStyle] = useState<HeroStyle>("classic");
+  const [games, setGames] = useState<ApiGame[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setHydrated(true);
     setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);
+    fetchGames()
+      .then(({ games: g }) => { setGames(g); setLoading(false); })
+      .catch(() => setLoading(false));
     return () => clearInterval(id);
   }, []);
 
   const schedule = useMemo(
-    () => buildSchedule({ now, preferred, filter }),
-    [now, preferred, filter],
+    () => buildSchedule({ now, games, preferred, filter }),
+    [now, games, preferred, filter],
   );
 
   const countdown = useMemo(
@@ -55,6 +62,14 @@ export default function Home() {
 
   const filterActive = filter !== "";
   const filterName = filter ? TEAMS[filter].name : "";
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-cream">
+        <span className="text-sm text-mute-2">Carregando jogos…</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cream px-6 pb-[90px] pt-10 text-ink">
@@ -87,25 +102,13 @@ export default function Home() {
           {schedule.next && countdown ? (
             <>
               {heroStyle === "classic" && (
-                <HeroClassic
-                  game={schedule.next}
-                  cd={countdown}
-                  hydrated={hydrated}
-                />
+                <HeroClassic game={schedule.next} cd={countdown} hydrated={hydrated} />
               )}
               {heroStyle === "editorial" && (
-                <HeroEditorial
-                  game={schedule.next}
-                  cd={countdown}
-                  hydrated={hydrated}
-                />
+                <HeroEditorial game={schedule.next} cd={countdown} hydrated={hydrated} />
               )}
               {heroStyle === "ticket" && (
-                <HeroTicket
-                  game={schedule.next}
-                  cd={countdown}
-                  hydrated={hydrated}
-                />
+                <HeroTicket game={schedule.next} cd={countdown} hydrated={hydrated} />
               )}
             </>
           ) : (
@@ -134,7 +137,7 @@ export default function Home() {
 
         <footer className="mt-12 text-center">
           <span className="text-xs text-mute-3">
-            Horários no fuso de Brasília · sujeitos a alteração · dados ilustrativos
+            Horários no fuso de Brasília · sujeitos a alteração
           </span>
         </footer>
       </div>

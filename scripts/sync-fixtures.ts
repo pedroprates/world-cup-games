@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import type { Fixture, TeamCode } from "../lib/types";
+import { validateFixtures } from "./validate-fixtures";
 
 const FIXTURES_PATH = path.join(process.cwd(), "data", "fixtures.json");
 const WC_CODE = "WC"; // football-data.org competition code for FIFA World Cup
@@ -96,6 +97,7 @@ async function sync() {
   }
 
   const merged = [...existing, ...added];
+  await validateFixtures(merged);   // exits with code 1 on failure
   await fs.writeFile(FIXTURES_PATH, JSON.stringify(merged, null, 2));
 
   const empty = merged.filter(f => f.broadcasterIds.length === 0).length;

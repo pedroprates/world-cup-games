@@ -78,14 +78,22 @@ function UpcomingRow({ game }: { game: EnrichedGame }) {
         </span>
         <span className="h-[18px] w-px bg-bone-3" />
         <div className="flex gap-1.5">
-          {game.channelsShort.map((c) => (
-            <span
-              key={c}
-              className="rounded-[7px] border border-clay-border bg-clay-bg px-2 py-[3px] text-xs font-semibold text-clay-deep"
-            >
-              {c}
+          {game.broadcastersShort.length > 0 ? (
+            game.broadcastersShort.map((b) => (
+              <span
+                key={b.id}
+                className="inline-flex items-center gap-1 rounded-[7px] border border-clay-border bg-clay-bg px-2 py-[3px] text-xs font-semibold text-clay-deep"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={b.logo} alt="" width={12} height={12} className="h-3 w-3 object-contain" />
+                {b.name}
+              </span>
+            ))
+          ) : (
+            <span className="rounded-[7px] border border-bone-2 bg-paper px-2 py-[3px] text-xs text-mute">
+              Sem TV
             </span>
-          ))}
+          )}
         </div>
       </div>
     </div>
