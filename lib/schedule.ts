@@ -1,16 +1,10 @@
-import { FIXTURES } from "./fixtures";
-import { TEAMS } from "./teams";
-import { BROADCASTERS_MAP } from "./broadcasters";
-import {
-  dayKey,
-  formatFullDayLabel,
-  formatTime,
-  isLiveNow,
-} from "./format";
+import { dayKey, formatFullDayLabel, formatTime, isLiveNow } from "./format";
+import type { ApiGame } from "./api-types";
 import type { DayGroup, EnrichedGame, TeamCode } from "./types";
 
 interface BuildArgs {
   now: Date;
+  games: ApiGame[];
   preferred: TeamCode;
   filter: TeamCode | "";
 }
@@ -23,24 +17,21 @@ interface BuildResult {
 
 const LIVE_WINDOW_MS = 105 * 60 * 1000;
 
-export const buildSchedule = ({ now, preferred, filter }: BuildArgs): BuildResult => {
-  const enriched: EnrichedGame[] = FIXTURES.map((f) => {
-    const kickoff = new Date(f.kickoff);
-    const home = TEAMS[f.home];
-    const away = TEAMS[f.away];
-    const isPreferred = f.home === preferred || f.away === preferred;
+export const buildSchedule = ({ now, games, preferred, filter }: BuildArgs): BuildResult => {
+  const enriched: EnrichedGame[] = games.map((g) => {
+    const kickoff = new Date(g.kickoff);
+    const isPreferred = g.home.code === preferred || g.away.code === preferred;
     const isLive = isLiveNow(kickoff, now);
-    const channels = f.broadcasterIds.map(id => BROADCASTERS_MAP[id]?.name ?? id);
     return {
-      id: f.id,
-      home,
-      away,
+      id: g.id,
+      home: g.home,
+      away: g.away,
       kickoff,
-      city: f.city,
-      venue: f.venue,
-      group: f.group,
-      channels,
-      channelsShort: channels.slice(0, 2),
+      city: g.city,
+      venue: g.venue,
+      group: g.group,
+      broadcasters: g.broadcasters,
+      broadcastersShort: g.broadcasters.slice(0, 2),
       timeLabel: formatTime(kickoff),
       dayLabel: formatFullDayLabel(kickoff, now),
       isLive,

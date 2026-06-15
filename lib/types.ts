@@ -56,8 +56,8 @@ export interface EnrichedGame {
   city: string;
   venue: string;
   group: string;
-  channels: string[];      // resolved broadcaster names (kept for current components)
-  channelsShort: string[]; // first 2 only
+  broadcasters: Broadcaster[];      // full objects (was channels: string[])
+  broadcastersShort: Broadcaster[]; // first 2 (was channelsShort: string[])
   timeLabel: string;
   dayLabel: string;
   isLive: boolean;

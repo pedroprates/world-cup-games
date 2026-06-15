@@ -59,14 +59,22 @@ function TodayCard({ game }: { game: EnrichedGame }) {
           {game.city}
         </span>
         <div className="flex flex-wrap justify-end gap-1.5">
-          {game.channels.map((c) => (
-            <span
-              key={c}
-              className="rounded-[7px] border border-clay-border bg-clay-bg px-2 py-[3px] text-xs font-semibold text-clay-deep"
-            >
-              {c}
+          {game.broadcasters.length > 0 ? (
+            game.broadcasters.map((b) => (
+              <span
+                key={b.id}
+                className="inline-flex items-center gap-1 rounded-[7px] border border-clay-border bg-clay-bg px-2 py-[3px] text-xs font-semibold text-clay-deep"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={b.logo} alt="" width={12} height={12} className="h-3 w-3 object-contain" />
+                {b.name}
+              </span>
+            ))
+          ) : (
+            <span className="rounded-[7px] border border-bone-2 bg-paper px-2 py-[3px] text-xs text-mute">
+              Sem transmissão
             </span>
-          ))}
+          )}
         </div>
       </div>
     </div>
