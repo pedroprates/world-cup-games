@@ -82,10 +82,8 @@ function UpcomingRow({ game }: { game: EnrichedGame }) {
             game.broadcastersShort.map((b) => (
               <span
                 key={b.id}
-                className="inline-flex items-center gap-1 rounded-[7px] border border-clay-border bg-clay-bg px-2 py-[3px] text-xs font-semibold text-clay-deep"
+                className="inline-flex items-center rounded-[7px] border border-clay-border bg-clay-bg px-2 py-[3px] text-xs font-semibold text-clay-deep"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={b.logo} alt="" width={12} height={12} className="h-3 w-3 object-contain" />
                 {b.name}
               </span>
             ))

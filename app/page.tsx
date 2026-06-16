@@ -3,10 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { TopControls } from "@/components/TopControls";
-import { HeroSwitcher } from "@/components/HeroSwitcher";
 import { HeroClassic } from "@/components/HeroClassic";
 import { HeroEditorial } from "@/components/HeroEditorial";
-import { HeroTicket } from "@/components/HeroTicket";
 import { TodaySection } from "@/components/TodaySection";
 import { UpcomingSection } from "@/components/UpcomingSection";
 import { TEAMS } from "@/lib/teams";
@@ -19,7 +17,7 @@ import {
   formatTime,
 } from "@/lib/format";
 import type { ApiGame } from "@/lib/api-types";
-import type { HeroStyle, TeamCode } from "@/lib/types";
+import type { TeamCode } from "@/lib/types";
 
 const FALLBACK_NOW = new Date("2026-06-12T12:00:00-03:00");
 
@@ -28,7 +26,6 @@ export default function Home() {
   const [now, setNow] = useState<Date>(FALLBACK_NOW);
   const [preferred, setPreferred] = useState<TeamCode>("BRA");
   const [filter, setFilter] = useState<TeamCode | "">("");
-  const [heroStyle, setHeroStyle] = useState<HeroStyle>("classic");
   const [games, setGames] = useState<ApiGame[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -96,20 +93,16 @@ export default function Home() {
                 </span>
               )}
             </div>
-            <HeroSwitcher value={heroStyle} onChange={setHeroStyle} />
           </div>
 
           {schedule.next && countdown ? (
             <>
-              {heroStyle === "classic" && (
+              <div className="hidden md:block">
                 <HeroClassic game={schedule.next} cd={countdown} hydrated={hydrated} />
-              )}
-              {heroStyle === "editorial" && (
+              </div>
+              <div className="md:hidden">
                 <HeroEditorial game={schedule.next} cd={countdown} hydrated={hydrated} />
-              )}
-              {heroStyle === "ticket" && (
-                <HeroTicket game={schedule.next} cd={countdown} hydrated={hydrated} />
-              )}
+              </div>
             </>
           ) : (
             <div className="rounded-3xl border border-dashed border-bone-soft bg-paper p-12 text-center">

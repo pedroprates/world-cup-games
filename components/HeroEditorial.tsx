@@ -88,10 +88,8 @@ export function HeroEditorial({ game, cd, hydrated }: HeroEditorialProps) {
               game.broadcasters.map((b) => (
                 <span
                   key={b.id}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-clay-border bg-clay-bg-soft px-2.5 py-1 text-[13px] font-semibold text-clay-deep"
+                  className="inline-flex items-center rounded-lg border border-clay-border bg-clay-bg-soft px-2.5 py-1 text-[13px] font-semibold text-clay-deep"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={b.logo} alt="" width={14} height={14} className="h-[14px] w-[14px] object-contain" />
                   {b.name}
                 </span>
               ))
