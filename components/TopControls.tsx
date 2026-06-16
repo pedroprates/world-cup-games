@@ -29,7 +29,7 @@ export function TopControls({
           </span>
           <span className="text-xs text-mute-3">destaque nos jogos</span>
         </div>
-        <div className="flex gap-3.5 overflow-x-auto pb-1">
+        <div className="flex gap-3.5 overflow-x-auto pb-1 pt-1">
           {PREFERRED_CHIPS.map((code) => {
             const team = TEAMS[code];
             const active = code === preferred;

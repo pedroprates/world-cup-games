@@ -13,7 +13,7 @@ export function enrichGame(fixture: Fixture): ApiGame {
     city: fixture.city,
     venue: fixture.venue,
     group: fixture.group,
-    broadcasters: fixture.broadcasterIds
+    broadcasters: Array.from(new Set(["caze-tv", ...fixture.broadcasterIds]))
       .map(id => BROADCASTERS_MAP[id])
       .filter(Boolean),
   };
